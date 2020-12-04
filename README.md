@@ -4,6 +4,8 @@
 
 Windows users who don't feel like compiling it themselves can find binaries in [`bin/win32`](bin/win32).
 
+![Screenshot](screenshot.png)
+
 ## Known limitations
 
 It supports only `|`, which must have spaces on either side. Don't use `+`, `-`, `%`, `~`, `!`, `^`, `&`, `&&`, `||`, etc.
