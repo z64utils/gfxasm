@@ -4,6 +4,7 @@
  */
 
 /* TODO use strtok_r instead of strtok */
+/* TODO support unicode filenames on win32 */
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -125,7 +126,7 @@ gsDPSetCombineLERP(a0,b0,c0,d0,Aa0, \
                                        gFL_(Ab1,3,3)|               \
                                        gFL_(Ad1,3,0))
 
-#define DELIM "() \"'\r\n\t"
+#define DELIM "{}() \"'\r\n\t"
 #define CONCAT_USCORE_(A,B) A ## _ ## B
 #define CONCAT_USCORE(A,B) CONCAT_USCORE_(A, B)
 
@@ -492,15 +493,25 @@ L_bitwise_or_test:
 #ifdef GFXASM_MAIN
 #define STRINGIFY_(X) #X
 #define STRINGIFY(X) STRINGIFY_(X)
-int main(void)
+int main(int argc, char *argv[])
 {
+	int i;
+	int binary = 0;
+	
 	fprintf(stderr, " gfxasm." STRINGIFY(GBI_PREFIX) " <z64.me>\n");
+	fprintf(stderr, " use -b to write binary to stdout\n");
 	fprintf(stderr, " * type a macro to assemble, then press enter\n");
 	fprintf(stderr, " * if you press enter without typing anything,\n");
 	fprintf(stderr, "   the program will exit\n");
 	fprintf(stderr, " * command line users: you can process a whole\n");
 	fprintf(stderr, "   file with a different macro on each line\n");
 	fprintf(stderr, "   by running this-program.exe < file.txt\n");
+	
+	for (i = 1; i < argc; ++i)
+	{
+		if (!strcmp(argv[i], "-b"))
+			binary = 1;
+	}
 	
 	while (1)
 	{
@@ -520,8 +531,24 @@ int main(void)
 		
 		if ((r = exec_cmd(n)))
 			do
-				fprintf(stderr, "%08X %08X\n", r[0], r[1]);
-			while ((r = exec_cmd(n)));
+			{
+				if (binary)
+				{
+					unsigned char buf[8] = {
+						r[0] >> 24
+						, r[0] >> 16
+						, r[0] >>  8
+						, r[0]
+						, r[1] >> 24
+						, r[1] >> 16
+						, r[1] >>  8
+						, r[1]
+					};
+					fwrite(buf, 1, sizeof(buf), stdout);
+				}
+				else
+					fprintf(stdout, "%08X %08X\n", r[0], r[1]);
+			} while ((r = exec_cmd(n)));
 		else
 			fprintf(stderr, "error: %s\n", gfxasm_error());
 	}
